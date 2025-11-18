@@ -41,7 +41,6 @@ namespace 產生影片分享內容用
             textBox2 = new System.Windows.Forms.TextBox();
             textBox3 = new System.Windows.Forms.TextBox();
             textBox4 = new System.Windows.Forms.TextBox();
-            textBox6 = new System.Windows.Forms.TextBox();
             textBox7 = new System.Windows.Forms.TextBox();
             textBox8 = new System.Windows.Forms.TextBox();
             folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
@@ -51,6 +50,7 @@ namespace 產生影片分享內容用
             button2 = new System.Windows.Forms.Button();
             comboBox1 = new System.Windows.Forms.ComboBox();
             label10 = new System.Windows.Forms.Label();
+            comboBox2 = new System.Windows.Forms.ComboBox();
             SuspendLayout();
             // 
             // label1
@@ -106,7 +106,7 @@ namespace 產生影片分享內容用
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new System.Drawing.Point(606, 101);
+            label6.Location = new System.Drawing.Point(595, 101);
             label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label6.Name = "label6";
             label6.Size = new System.Drawing.Size(54, 19);
@@ -167,15 +167,6 @@ namespace 產生影片分享內容用
             textBox4.Size = new System.Drawing.Size(50, 27);
             textBox4.TabIndex = 11;
             textBox4.Text = "MP4";
-            // 
-            // textBox6
-            // 
-            textBox6.Location = new System.Drawing.Point(669, 98);
-            textBox6.Margin = new System.Windows.Forms.Padding(4);
-            textBox6.Name = "textBox6";
-            textBox6.Size = new System.Drawing.Size(49, 27);
-            textBox6.TabIndex = 13;
-            textBox6.Text = "有碼";
             // 
             // textBox7
             // 
@@ -255,11 +246,25 @@ namespace 產生影片分享內容用
             label10.Size = new System.Drawing.Size(539, 29);
             label10.TabIndex = 1;
             // 
+            // comboBox2
+            // 
+            comboBox2.FormattingEnabled = true;
+            comboBox2.Items.AddRange(new object[] { "有碼", "無碼" });
+            comboBox2.Location = new System.Drawing.Point(657, 98);
+            comboBox2.Margin = new System.Windows.Forms.Padding(4);
+            comboBox2.Name = "comboBox2";
+            comboBox2.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            comboBox2.Size = new System.Drawing.Size(64, 27);
+            comboBox2.TabIndex = 20;
+            comboBox2.Text = "有碼";
+            // 
             // Form1
             // 
+            AllowDrop = true;
             AutoScaleDimensions = new System.Drawing.SizeF(9F, 19F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(753, 324);
+            Controls.Add(comboBox2);
             Controls.Add(comboBox1);
             Controls.Add(button2);
             Controls.Add(button1);
@@ -267,7 +272,6 @@ namespace 產生影片分享內容用
             Controls.Add(textBox9);
             Controls.Add(textBox8);
             Controls.Add(textBox7);
-            Controls.Add(textBox6);
             Controls.Add(textBox4);
             Controls.Add(textBox3);
             Controls.Add(textBox2);
@@ -285,6 +289,9 @@ namespace 產生影片分享內容用
             Name = "Form1";
             Text = "影片分享內容產生器";
             Load += Form1_Load;
+            DragDrop += Form1_DragDrop;
+            DragEnter += Form1_DragEnter;
+            DragLeave += Form1_DragLeave;
             ResumeLayout(false);
             PerformLayout();
 
@@ -304,7 +311,6 @@ namespace 產生影片分享內容用
         private System.Windows.Forms.TextBox textBox2;
         private System.Windows.Forms.TextBox textBox3;
         private System.Windows.Forms.TextBox textBox4;
-        private System.Windows.Forms.TextBox textBox6;
         private System.Windows.Forms.TextBox textBox7;
         private System.Windows.Forms.TextBox textBox8;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
@@ -314,6 +320,7 @@ namespace 產生影片分享內容用
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.ComboBox comboBox1;
         private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.ComboBox comboBox2;
     }
 }
 
