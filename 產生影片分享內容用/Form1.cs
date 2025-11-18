@@ -15,6 +15,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
 using System.Web;   // HttpUtility.UrlEncode 用
+using ImageMagick;
 
 namespace 產生影片分享內容用
 {
@@ -36,7 +37,7 @@ namespace 產生影片分享內容用
         {
             overlayPanel = new DragOverlayPanel();
             overlayPanel.Dock = DockStyle.Fill;
-            overlayPanel.OverlayText = "請將 MP4 檔案拖曳到此視窗";
+            overlayPanel.OverlayText = "請將 MP4 或 webp 檔案拖曳到此視窗";
             overlayPanel.ShowText = false;       // 預設不顯示
             overlayPanel.Visible = false;
 
@@ -152,65 +153,92 @@ namespace 產生影片分享內容用
             if (files == null || files.Length == 0)
                 return;
 
+            // 只取 .webp
+            var webpFiles = files
+                .Where(f => string.Equals(Path.GetExtension(f), ".webp", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
             // 只取 .mp4
             var mp4Files = files
                 .Where(f => string.Equals(Path.GetExtension(f), ".mp4", StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            if (!mp4Files.Any())
+            if (!mp4Files.Any() && !webpFiles.Any())
             {
-                MessageBox.Show("沒有拖進任何 .mp4 檔案。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("沒有拖進任何 .mp4 或 .webp 檔案。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            // 1) 總大小 (所有 mp4 檔)
-            long totalBytes = mp4Files.Sum(f => new FileInfo(f).Length);
-            double sizeGB = totalBytes / (1024d * 1024d * 1024d);
-            textBox3.Text = sizeGB.ToString("0.0#"); // 2位小數
-
-            // 2) 只取第一個檔案的標題與寬度
-            string firstFile = mp4Files[0];
-
-            try
+            if(webpFiles.Any())
             {
-                IWMPMedia media = _wmp.newMedia(firstFile);
-
-                // 影片標題 (metadata Title，沒有就用檔名)
-                string title = media.getItemInfo("Title");
-                if (string.IsNullOrWhiteSpace(title))
+                foreach (var webp in webpFiles)
                 {
-                    title = Path.GetFileNameWithoutExtension(firstFile);
-                }
-                title = title.Replace(" - 見放題ch デラックス - FANZA月額動画", "").Trim();
-
-                // 取高度或寬度，當作基準 P 值
-                // 一般 240P / 360P... 其實是垂直解析度，所以這裡優先取 WM/VideoHeight
-                string heightStr = media.getItemInfo("WM/VideoHeight");
-                int basisP;
-                if (!int.TryParse(heightStr, out basisP))
-                {
-                    // 如果高度取不到，退而求其次用寬度
-                    string widthStr = media.getItemInfo("WM/VideoWidth");
-                    if (!int.TryParse(widthStr, out basisP))
+                    try
                     {
-                        basisP = 0; // 真的都沒取到就當作未知
+                        ConvertWebpToJpg(webp);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(
+                            $"轉換圖片失敗：{Path.GetFileName(webp)}\r\n{ex.Message}",
+                            "錯誤",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
                     }
                 }
-
-                SetResolutionComboByNearestP(basisP);
-
-                // 假設 firstFileTitle 是你從 mp4 抓到的標題字串
-                await FetchJavdbInfoAsync(title);
             }
-            catch (Exception ex)
+            if (mp4Files.Any())
             {
-                MessageBox.Show(
-                    $"讀取影片資訊失敗：{Path.GetFileName(firstFile)}\r\n{ex.Message}",
-                    "錯誤",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                // 1) 總大小 (所有 mp4 檔)
+                long totalBytes = mp4Files.Sum(f => new FileInfo(f).Length);
+                double sizeGB = totalBytes / (1024d * 1024d * 1024d);
+                textBox3.Text = sizeGB.ToString("0.0#"); // 2位小數
+
+                // 2) 只取第一個檔案的標題與寬度
+                string firstFile = mp4Files[0];
+
+                try
+                {
+                    IWMPMedia media = _wmp.newMedia(firstFile);
+
+                    // 影片標題 (metadata Title，沒有就用檔名)
+                    string title = media.getItemInfo("Title");
+                    if (string.IsNullOrWhiteSpace(title))
+                    {
+                        title = Path.GetFileNameWithoutExtension(firstFile);
+                    }
+                    title = title.Replace(" - 見放題ch デラックス - FANZA月額動画", "").Trim();
+
+                    // 取高度或寬度，當作基準 P 值
+                    // 一般 240P / 360P... 其實是垂直解析度，所以這裡優先取 WM/VideoHeight
+                    string heightStr = media.getItemInfo("WM/VideoHeight");
+                    int basisP;
+                    if (!int.TryParse(heightStr, out basisP))
+                    {
+                        // 如果高度取不到，退而求其次用寬度
+                        string widthStr = media.getItemInfo("WM/VideoWidth");
+                        if (!int.TryParse(widthStr, out basisP))
+                        {
+                            basisP = 0; // 真的都沒取到就當作未知
+                        }
+                    }
+
+                    SetResolutionComboByNearestP(basisP);
+
+                    // 假設 firstFileTitle 是你從 mp4 抓到的標題字串
+                    await FetchJavdbInfoAsync(title);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        $"讀取影片資訊失敗：{Path.GetFileName(firstFile)}\r\n{ex.Message}",
+                        "錯誤",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+
             }
-            
+
         }
 
         private void Form1_DragEnter(object sender, DragEventArgs e)
@@ -287,6 +315,31 @@ namespace 產生影片分享內容用
             }
         }
 
+        private void ConvertWebpToJpg(string webpPath)
+        {
+            string dir = Path.GetDirectoryName(webpPath)!;
+            string filenameWithoutExt = Path.GetFileNameWithoutExtension(webpPath);
+            string jpgPath = Path.Combine(dir, filenameWithoutExt + ".jpg");
+
+            // 若已存在同名 jpg，可視情況覆寫或跳過
+            if (File.Exists(jpgPath))
+            {
+                // 這裡選擇覆寫，如需跳過可改成 return。
+                //AddLog($"[覆寫] 已存在 {Path.GetFileName(jpgPath)}，重新產生。");
+            }
+
+            using (var image = new MagickImage(webpPath))
+            {
+                image.Format = MagickFormat.Jpeg;
+                image.Quality = 100; // 可自己調整品質 (1-100)
+                image.Write(jpgPath);
+            }
+
+            //刪除舊檔案
+            File.Delete(webpPath);
+
+            //AddLog($"[成功] {Path.GetFileName(webpPath)} → {Path.GetFileName(jpgPath)}");
+        }
         private async Task FetchJavdbInfoAsync(string rawTitle)
         {
             // 查詢前先把標題設為當前影片的標題

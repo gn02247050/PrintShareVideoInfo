@@ -287,7 +287,7 @@ namespace 產生影片分享內容用
             Controls.Add(label1);
             Margin = new System.Windows.Forms.Padding(4);
             Name = "Form1";
-            Text = "影片分享內容產生器";
+            Text = "影片分享內容產生器(附加Webp轉Jpg功能)";
             Load += Form1_Load;
             DragDrop += Form1_DragDrop;
             DragEnter += Form1_DragEnter;

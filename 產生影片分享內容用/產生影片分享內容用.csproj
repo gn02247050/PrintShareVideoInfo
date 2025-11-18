@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
+    <PackageReference Include="Verify.ImageMagick" Version="3.8.0" />
   </ItemGroup>
 
   <ItemGroup>
