@@ -263,7 +263,7 @@ namespace 產生影片分享內容用
             AllowDrop = true;
             AutoScaleDimensions = new System.Drawing.SizeF(9F, 19F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(753, 324);
+            ClientSize = new System.Drawing.Size(753, 323);
             Controls.Add(comboBox2);
             Controls.Add(comboBox1);
             Controls.Add(button2);

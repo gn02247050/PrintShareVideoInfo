@@ -6,8 +6,8 @@ namespace 產生影片分享內容用
 {
     public class DragOverlayPanel : Panel
     {
-        public bool ShowText { get; set; } = false;
-        public string OverlayText { get; set; } = "請將 MP4 或 webp 檔案拖曳到此視窗";
+        public bool ShowText = false;
+        public string OverlayText = "請將 MP4 或 webp 檔案拖曳到此視窗";
 
         public DragOverlayPanel()
         {

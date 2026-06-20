@@ -24,12 +24,13 @@ namespace 產生影片分享內容用
         private DragOverlayPanel overlayPanel;
         private bool _showDragText = false;
         private WindowsMediaPlayer _wmp;
+        //JavdbBrowserForm browserForm;
         public Form1()
         {
             InitializeComponent();
             // 初始化 WMP 物件
             _wmp = new WindowsMediaPlayer();
-
+            //browserForm = new JavdbBrowserForm();
 
             InitializeDragOverlay(); // ← 加這行
         }
@@ -227,6 +228,24 @@ namespace 產生影片分享內容用
 
                     // 假設 firstFileTitle 是你從 mp4 抓到的標題字串
                     await FetchJavdbInfoAsync(title);
+
+                    // 建立新的資料夾，並以影片名稱命名
+                    var newDir = Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(firstFile)!, textBox2.Text));
+
+                    // 將所有拖進來的 mp4 檔案移動到新資料夾中
+                    foreach (var mp4 in mp4Files)
+                    {
+                        var destPath = Path.Combine(newDir.FullName, Path.GetFileName(mp4));
+                        File.Move(mp4, destPath);
+                    }
+
+                    //同時將內嵌資源內的Copy資料夾內的檔案複製到新資料夾中
+                    var copyResourceDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Copy");
+                    File.Copy(Path.Combine(copyResourceDir, "he01204046@伊莉論壇.txt"), Path.Combine(newDir.FullName, "he01204046@伊莉論壇.txt"), true);
+                    File.Copy(Path.Combine(copyResourceDir, "伊莉討論區.url"), Path.Combine(newDir.FullName, "伊莉討論區.url"), true);
+
+                    //把影片名稱複製到剪貼簿中
+                    Clipboard.SetText(title);
                 }
                 catch (Exception ex)
                 {
@@ -340,6 +359,20 @@ namespace 產生影片分享內容用
 
             //AddLog($"[成功] {Path.GetFileName(webpPath)} → {Path.GetFileName(jpgPath)}");
         }
+        /*
+        private string GetHtmlViaBrowser(string url)
+        {
+            using (var form = new JavdbBrowserForm(url))
+            {
+                var result = form.ShowDialog(); // 會卡住直到視窗關閉
+
+                if (result == DialogResult.OK)
+                    return form.PageHtml;
+
+                return null;
+            }
+        }
+        */
         private async Task FetchJavdbInfoAsync(string rawTitle)
         {
             // 查詢前先把標題設為當前影片的標題
@@ -358,24 +391,29 @@ namespace 產生影片分享內容用
             }
             if (string.IsNullOrWhiteSpace(rawTitle))
                 return;
-
-            var handler = new HttpClientHandler
+            using (var browserForm = new JavdbBrowserForm())
             {
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
-            };
-
-            using (var client = new HttpClient(handler))
-            {
-                client.Timeout = TimeSpan.FromSeconds(20);
-                client.DefaultRequestHeaders.Add("User-Agent",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-                    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+                // 顯示視窗（讓使用者看得到整個過程）
+                browserForm.Show();
 
                 // 1. 搜尋頁
                 string query = System.Web.HttpUtility.UrlEncode(rawTitle.Trim());
                 string searchUrl = $"https://javdb.com/search?q={query}&f=all";
 
-                string searchHtml = await client.GetStringAsync(searchUrl);
+                // === 改成用瀏覽器抓 HTML，讓使用者自行處理驗證 ===
+                string searchHtml = await browserForm.LoadPageAndGetHtmlAsync(
+                    searchUrl,
+                    new[] { "div.movie-list" },   // 正常搜尋結果頁應包含 movie-list
+                    "目前畫面看起來不像正常的搜尋結果頁，可能是機器人驗證或其他畫面。" +
+                    "請在此視窗中完成驗證或操作，直到搜尋結果出現，再按「驗證完成，繼續」。"
+                );
+                if (string.IsNullOrEmpty(searchHtml))
+                {
+                    MessageBox.Show("無法取得搜尋頁面 HTML。");
+                    browserForm.Close();
+                    return;
+                }
+
                 var searchDoc = new HtmlAgilityPack.HtmlDocument();
                 searchDoc.LoadHtml(searchHtml);
 
@@ -385,7 +423,8 @@ namespace 產生影片分享內容用
 
                 if (movieListNode == null)
                 {
-                    // 沒找到搜尋結果區塊就直接放棄
+                    MessageBox.Show("搜尋頁找不到 movie-list 區塊，可能頁面結構已變更。");
+                    browserForm.Close();
                     return;
                 }
 
@@ -399,7 +438,7 @@ namespace 產生影片分享內容用
                             .Select(a =>
                             {
                                 var title = a.GetAttributeValue("title", "").Trim();
-                                var score = Similarity(normalizedTarget, title);
+                                var score = Similarity(title, normalizedTarget);
                                 return new
                                 {
                                     Node = a,
@@ -415,7 +454,7 @@ namespace 產生影片分享內容用
 
                 double threshold = 0.5; // 你可以依實測調整，0.7 也可以
 
-                if (best != null && best.Score >= threshold)
+                if (best != null)
                 {
 
                 }
@@ -423,6 +462,7 @@ namespace 產生影片分享內容用
                 {
                     // 沒有相似度夠高的結果，可以視為「沒找到」或給使用者提示
                     MessageBox.Show("找不到與標題相符的影片。");
+                    browserForm.Close();
                     return;
                 }
 
@@ -438,7 +478,19 @@ namespace 產生影片分享內容用
                 // detailUrl => https://javdb563.com/v/4D0pE  之類
 
                 // 2. 詳細頁（包含 over18 modal + section 內容）
-                string detailHtml = await client.GetStringAsync(detailUrl);
+                // 同樣用瀏覽器抓，讓使用者若再遇驗證可以處理
+                string detailHtml = await browserForm.LoadPageAndGetHtmlAsync(
+                    detailUrl,
+                    new[] { "div.video-detail" },  // 正常詳細頁應包含 video-detail
+                    "目前畫面看起來不像正常的詳細頁，可能是機器人驗證／18+確認或其他畫面。" +
+                    "請在此視窗中完成操作，直到詳細內容出現，再按「驗證完成，繼續」。"
+                );
+                if (string.IsNullOrEmpty(detailHtml))
+                {
+                    MessageBox.Show("無法取得詳細頁面 HTML。");
+                    browserForm.Close();
+                    return;
+                }
                 var detailDoc = new HtmlAgilityPack.HtmlDocument();
                 detailDoc.LoadHtml(detailHtml);
 
@@ -449,6 +501,7 @@ namespace 產生影片分享內容用
                 if (sectionNode == null)
                 {
                     MessageBox.Show("找不到 <section class=\"section\">。");
+                    browserForm.Close();
                     return;
                 }
 
@@ -460,6 +513,7 @@ namespace 產生影片分享內容用
                 if (videoDetailNode == null)
                 {
                     MessageBox.Show("在 section 裡找不到 .video-detail 區塊。");
+                    browserForm.Close();
                     return;
                 }
 
@@ -471,6 +525,7 @@ namespace 產生影片分享內容用
                 if (titleContainer == null)
                 {
                     MessageBox.Show("在 video-detail 裡找不到 class='title is-4'。");
+                    browserForm.Close();
                     return;
                 }
 
@@ -479,6 +534,7 @@ namespace 產生影片分享內容用
                 if (strongNodes == null || strongNodes.Count < 1)
                 {
                     MessageBox.Show("title is-4 裡找不到任何 <strong>。");
+                    browserForm.Close();
                     return;
                 }
 
@@ -525,8 +581,12 @@ namespace 產生影片分享內容用
                     textBox2.Text = secondTextBoxValue;
                     textBox1.Text = firstTextBoxValue;
                 }
+
+                // 5. 全流程完成 → 關閉瀏覽器 Form
+                browserForm.Close();
             }
         }
+        
         string NormalizeTitle(string s)
         {
             if (string.IsNullOrWhiteSpace(s)) return string.Empty;
@@ -583,14 +643,38 @@ namespace 產生影片分享內容用
             var s = NormalizeTitle(a);
             var t = NormalizeTitle(b);
 
-            if (s.Length == 0 && t.Length == 0) return 1.0;
-            if (s.Length == 0 || t.Length == 0) return 0.0;
+            if (string.IsNullOrEmpty(s) && string.IsNullOrEmpty(t)) return 1.0;
+            if (string.IsNullOrEmpty(s) || string.IsNullOrEmpty(t)) return 0.0;
 
+            // 1. 完全相同 → 1.0
+            if (s == t)
+                return 1.0;
+
+            // 2. a 是 b 的 substring → 給 0.98
+            if (t.Contains(s, StringComparison.OrdinalIgnoreCase))
+                return 0.98;
+
+            // 3. a 的所有字元都出現在 b 裡 → 給 0.95
+            bool allFound = true;
+            foreach (var c in s)
+            {
+                if (!t.Contains(c))
+                {
+                    allFound = false;
+                    break;
+                }
+            }
+
+            if (allFound)
+                return 0.95; // 你可以調整成你要的權重
+
+            // 4. fallback：使用 Levenshtein
             int dist = LevenshteinDistance(s, t);
             int maxLen = Math.Max(s.Length, t.Length);
 
             return 1.0 - (double)dist / maxLen;
         }
+
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
             base.OnFormClosed(e);
