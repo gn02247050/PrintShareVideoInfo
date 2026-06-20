@@ -119,7 +119,7 @@ namespace 產生影片分享內容用
             Label l8 = new Label { Text = "種子碼", Location = new Point(17, 186), AutoSize = true };
             TextBox t8 = new TextBox { Location = new Point(105, 182), Size = new Size(615, 27), Text = savedData?.TextBox8Text ?? "" };
 
-            Label l10 = new Label { BorderStyle = BorderStyle.Fixed3D, Location = new Point(17, 230), Size = new Size(539, 29) };
+            Label l10 = new Label { BorderStyle = BorderStyle.Fixed3D, Location = new Point(17, 230), Size = new Size(704, 29) };
 
             // 將控制項加入 Page
             newPage.Controls.AddRange(new Control[] { l1, t2, l2, t1, l3, t3, l4, c1, l5, t4, l6, c2, l7, t7, l8, t8, l10 });
