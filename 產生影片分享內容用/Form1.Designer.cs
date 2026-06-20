@@ -40,7 +40,7 @@
             // 
             // textBox9
             // 
-            textBox9.Location = new System.Drawing.Point(105, 353);
+            textBox9.Location = new System.Drawing.Point(98, 318);
             textBox9.Margin = new System.Windows.Forms.Padding(4);
             textBox9.Name = "textBox9";
             textBox9.ReadOnly = true;
@@ -50,7 +50,7 @@
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new System.Drawing.Point(17, 356);
+            label9.Location = new System.Drawing.Point(10, 321);
             label9.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label9.Name = "label9";
             label9.Size = new System.Drawing.Size(69, 19);
@@ -59,7 +59,7 @@
             // 
             // button1
             // 
-            button1.Location = new System.Drawing.Point(682, 351);
+            button1.Location = new System.Drawing.Point(675, 316);
             button1.Margin = new System.Windows.Forms.Padding(4);
             button1.Name = "button1";
             button1.Size = new System.Drawing.Size(81, 29);
@@ -70,7 +70,7 @@
             // 
             // button2
             // 
-            button2.Location = new System.Drawing.Point(651, 392);
+            button2.Location = new System.Drawing.Point(651, 353);
             button2.Margin = new System.Windows.Forms.Padding(4);
             button2.Name = "button2";
             button2.Size = new System.Drawing.Size(112, 29);
@@ -81,7 +81,7 @@
             // 
             // tabControl1
             // 
-            tabControl1.Location = new System.Drawing.Point(12, 47);
+            tabControl1.Location = new System.Drawing.Point(11, 12);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
             tabControl1.Size = new System.Drawing.Size(752, 299);
@@ -89,7 +89,7 @@
             // 
             // btnAddTab
             // 
-            btnAddTab.Location = new System.Drawing.Point(12, 12);
+            btnAddTab.Location = new System.Drawing.Point(10, 352);
             btnAddTab.Name = "btnAddTab";
             btnAddTab.Size = new System.Drawing.Size(100, 29);
             btnAddTab.TabIndex = 22;
@@ -99,7 +99,7 @@
             // 
             // btnDeleteTab
             // 
-            btnDeleteTab.Location = new System.Drawing.Point(118, 12);
+            btnDeleteTab.Location = new System.Drawing.Point(116, 352);
             btnDeleteTab.Name = "btnDeleteTab";
             btnDeleteTab.Size = new System.Drawing.Size(100, 29);
             btnDeleteTab.TabIndex = 23;
@@ -112,7 +112,7 @@
             AllowDrop = true;
             AutoScaleDimensions = new System.Drawing.SizeF(9F, 19F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(776, 434);
+            ClientSize = new System.Drawing.Size(776, 389);
             Controls.Add(btnDeleteTab);
             Controls.Add(btnAddTab);
             Controls.Add(tabControl1);
