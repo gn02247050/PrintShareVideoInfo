@@ -410,6 +410,36 @@ namespace 產生影片分享內容用
                 var ctx = GetCurrentContext();
                 if (ctx == null) return;
 
+                // ==========================================
+                // 加入判斷：當前頁籤是否已經有資料 (日文標題、大小不為空)
+                // ==========================================
+                bool hasData = !string.IsNullOrWhiteSpace(ctx.TextBox2.Text) &&
+                               !string.IsNullOrWhiteSpace(ctx.TextBox3.Text);
+                if (hasData)
+                {
+                    DialogResult result = MessageBox.Show(
+                        "當前頁籤已有資料，是否建立新的頁籤並匯入？\n\n" +
+                        "選「是(Y)」：建立新頁籤並匯入\n" +
+                        "選「否(N)」：覆蓋當前頁籤內容",
+                        "確認匯入",
+                        MessageBoxButtons.YesNoCancel,
+                        MessageBoxIcon.Question
+                    );
+
+                    if (result == DialogResult.Yes)
+                    {
+                        // 呼叫現有的方法建立新頁籤，這會自動切換過去並回傳新的 ctx
+                        ctx = AddNewTabPage();
+                    }
+                    else if (result == DialogResult.Cancel)
+                    {
+                        // 放棄此次拖曳操作，直接結束
+                        return;
+                    }
+                    // 若選擇 No，則 ctx 保持原本的，繼續往下執行即會覆蓋
+                }
+                // ==========================================
+
                 long totalBytes = mp4Files.Sum(f => new FileInfo(f).Length);
                 double sizeGB = totalBytes / (1024d * 1024d * 1024d);
                 ctx.TextBox3.Text = sizeGB.ToString("0.0#");
